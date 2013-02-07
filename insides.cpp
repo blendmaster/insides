@@ -204,6 +204,8 @@ void initInotify() {
 
 #define EVENT_SIZE  ( sizeof (struct inotify_event) )
 #define BUF_LEN     ( 1024 * ( EVENT_SIZE + 16 ) )
+GLuint setup_cube ( );
+void draw();
 
 // called by glutTimerFunc to periodically poll inotify
 //
@@ -227,6 +229,10 @@ void pollInotifyShaders(int _)
   } else if (FD_ISSET(inotifyFD, &descriptors)) {
     // there was a change
     cout << "(" << time(0) << ") Change detected, reloading shaders..." << endl;
+
+    SetUpProgram();
+    CubeVAO = setup_cube();
+    draw();
 
     // flush buffer.
     char buf[BUF_LEN];
@@ -534,7 +540,7 @@ GLint init_glut(GLint *argc, char **argv)
   glutDisplayFunc(draw);
 
   // periodically poll shader files for changes (live reload)
-  glutTimerFunc(100 /* ms */, pollInotifyShaders, 0);
+  glutTimerFunc(1000 /* ms */, pollInotifyShaders, 0);
 
   return id;
 }
