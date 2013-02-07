@@ -6,6 +6,7 @@
 #include <iostream>
 #include <fstream>
 #include <cstdlib>
+#include <unistd.h>
 #include <cassert>
 #include <string>
 #include <sstream>
@@ -17,6 +18,8 @@
 #include <GL/gl.h>
 #include <GL/glext.h>
 #include <GL/glut.h>
+
+#include <sys/inotify.h>
 
 #include "trackball.hpp"
 
@@ -56,6 +59,10 @@ GLint PLoc, RLoc, SizeLoc, MaxLoc, fwdLoc;
 GLint CubeVAO;
 
 GLuint TexHandle;  // texture handle
+
+// inotify state
+int inotifyFD;
+int watchDescriptor;
 
 /* --------------------------------------------- */
 /* ----- TEXTURE SETUP ------------------------- */
@@ -182,6 +189,60 @@ void SetUpProgram()
 
   fwdLoc = glGetUniformLocation(ProgramHandle,"fwd");
   //  assert(fwdLoc!=-1);
+}
+
+void initInotify() {
+  inotifyFD = inotify_init();
+
+  if (inotifyFD < 0) {
+    cerr << "Inotify initialization failed ;_;" << endl;
+    exit(-1);
+  }
+
+  watchDescriptor = inotify_add_watch(inotifyFD, ".", IN_MODIFY | IN_CREATE);
+}
+
+#define EVENT_SIZE  ( sizeof (struct inotify_event) )
+#define BUF_LEN     ( 1024 * ( EVENT_SIZE + 16 ) )
+GLuint setup_cube ( );
+void draw();
+
+// called by glutTimerFunc to periodically poll inotify
+//
+// Reloads shader files when they change, so you can edit the shaders while the
+// C++ program is running and see live updates.
+void pollInotifyShaders(int _)
+{
+  fd_set descriptors;
+  struct timeval time_to_wait;
+
+  FD_ZERO(&descriptors);
+  FD_SET(inotifyFD, &descriptors);
+
+  time_to_wait.tv_sec = 0;
+  time_to_wait.tv_usec = 10000;
+
+  int ret = select(inotifyFD + 1, &descriptors, NULL, NULL, &time_to_wait);
+
+  if (ret < 0) {
+    cerr << "Polling Inotify failed ;_;" << endl;
+  } else if (FD_ISSET(inotifyFD, &descriptors)) {
+    // there was a change
+    cout << "(" << time(0) << ") Change detected, reloading shaders..." << endl;
+
+    SetUpProgram();
+    CubeVAO = setup_cube();
+    draw();
+
+    // flush buffer.
+    char buf[BUF_LEN];
+    if (read(inotifyFD, buf, BUF_LEN) < 0) {
+      cerr << "Error flushing inotify fd ;_;" << endl;
+    }
+  }
+
+  // re-register timeout
+  glutTimerFunc(1000 /* us */, pollInotifyShaders, 0);
 }
 
 /* --------------------------------------------- */
@@ -478,6 +539,9 @@ GLint init_glut(GLint *argc, char **argv)
   /* what to do on each display loop iteration */
   glutDisplayFunc(draw);
 
+  // periodically poll shader files for changes (live reload)
+  glutTimerFunc(1000 /* ms */, pollInotifyShaders, 0);
+
   return id;
 }
 
@@ -505,6 +569,9 @@ GLint main(GLint argc, char **argv)
 
   // set up vertex/fragment programs
   SetUpProgram();
+
+  // start watching glsl files for changes
+  initInotify();
 
   // set up Vertex Array Object containing the cube geometry
   CubeVAO = setup_cube();
