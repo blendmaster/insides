@@ -18,6 +18,8 @@
 #include <GL/glext.h>
 #include <GL/glut.h>
 
+#include <sys/inotify.h>
+
 #include "trackball.hpp"
 
 using namespace std;
