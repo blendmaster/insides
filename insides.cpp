@@ -184,6 +184,16 @@ void SetUpProgram()
   //  assert(fwdLoc!=-1);
 }
 
+// called by glutTimerFunc to periodically poll inotify
+void pollInotifyShaders(int _)
+{
+
+  // do stuff
+
+  // re-register timeout
+  glutTimerFunc(100 /* ms */, pollInotifyShaders, 0);
+}
+
 /* --------------------------------------------- */
 /* ---- GEOMETRY BUFFER SETUP ------------------ */
 /* --------------------------------------------- */
@@ -477,6 +487,9 @@ GLint init_glut(GLint *argc, char **argv)
 
   /* what to do on each display loop iteration */
   glutDisplayFunc(draw);
+
+  // periodically poll shader files for changes (live reload)
+  glutTimerFunc(100 /* ms */, pollInotifyShaders, 0);
 
   return id;
 }
