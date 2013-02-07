@@ -357,24 +357,24 @@ void mouse_button(GLint btn, GLint state, GLint mx, GLint my)
     case GLUT_LEFT_BUTTON:
       switch( state ) {
         case GLUT_DOWN:
-	  leftd = true;
-	  trckb->mousedown(mx,my);
-	  break;
+          leftd = true;
+          trckb->mousedown(mx,my);
+          break;
         case GLUT_UP:
-	  leftd = false;
-	  trckb->mouseup(mx,my);
-	  break;
+          leftd = false;
+          trckb->mouseup(mx,my);
+          break;
       }
       break;
     case GLUT_MIDDLE_BUTTON:
       switch( state ) {
         case GLUT_DOWN:
-	  middled = true;
-	  lasty = my;
-	  break;
+          middled = true;
+          lasty = my;
+          break;
         case GLUT_UP:
-	  middled = false;
-	  break;
+          middled = false;
+          break;
       }
       break;
   }
