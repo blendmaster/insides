@@ -512,7 +512,7 @@ GLint init_glut(GLint *argc, char **argv)
   glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
 
   /* create a GLUT window (not drawn until glutMainLoop() is entered) */
-  id = glutCreateWindow("Volume Rendering to be");
+  id = glutCreateWindow("Insides");
 
   /* register callbacks */
 
