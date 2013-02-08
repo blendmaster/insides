@@ -1,5 +1,7 @@
 #version 420
 
+#define E 2.71828
+
 // ------------------- INPUT VARIABLES ----------------------
 
 in vec3 entry;      // entry point in the model coordinate system
@@ -32,14 +34,16 @@ float valueAt(vec3 loc) {
   return texture(tex, loc / Size).r;
 }
 
-// whether the location is within the bounds
-bool inside(vec3 loc, vec3 lowerbound, vec3 upperbound) {
-  return loc.x >= lowerbound.x && loc.x <= upperbound.x
-      && loc.y >= lowerbound.y && loc.y <= upperbound.y
-      && loc.z >= lowerbound.z && loc.z <= upperbound.z;
+// whether the location is within the ROI
+bool inside(vec3 loc) {
+  return loc.x >= 0 && loc.x <= Size.x
+      && loc.y >= 0 && loc.y <= Size.y
+      && loc.z >= 0 && loc.z <= Size.z;
 }
 
+#define DELTA          0.5
 #define GRADIENT_DELTA 0.1
+#define T_THRESHOLD    0.01
 
 // coord is 0, 1, 2 (x, y z)
 float centralDiff(vec3 loc, int coord) {
@@ -68,19 +72,16 @@ void main() {
   // Hence inverse(R)=transpose(R) needs to be applied
 
   vec3 dir = transpose(R)*world;  // direction of the ray in model coordinate system
-  vec3 delta = 0.5 * normalize(dir);
-
-  vec3 lower = vec3(0.0, 0.0, 0.0);
-  vec3 upper = Size;
+  vec3 delta = DELTA * normalize(dir);
 
   float I = 0;
   float t = 1;
 
-  for (vec3 loc = entry; t > 0.001 && inside(loc, lower, upper); loc += delta) {
+  for (vec3 loc = entry; t > T_THRESHOLD && inside(loc); loc += delta) {
     if (valueAt(loc) > 0.0) {
       I += t * length(gradientAt(loc));
     }
-    t *= pow(2.71828, -valueAt(loc));
+    t *= pow(E, -valueAt(loc));
   }
 
   fragcolor = vec4(I,0,0,1);
