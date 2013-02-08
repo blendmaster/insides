@@ -579,6 +579,13 @@ GLint main(GLint argc, char **argv)
   // set up the texture here using the TextureSetup function
   // for example: TextureSetup("bonsai.raw",256,256,256);
   // the three integer arguments are the resolution of the data
+  if (argc != 5) {
+    cout << "Usage: insides <texture file> <xsize> <ysize> <zsize>" << endl;
+    return -1;
+  } else {
+    cout << "Reading 3d texture " << argv[1] << "..." << endl;
+    TextureSetup(argv[1], atoi(argv[2]), atoi(argv[3]), atoi(argv[4]));
+  }
 
   // main loop: keep processing events until exit is requested
   glutMainLoop();
