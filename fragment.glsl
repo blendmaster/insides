@@ -32,6 +32,13 @@ float valueAt(vec3 coords) {
   return texture(tex,(1/Size.x,1/Size.y,1/Size.z) * coords).r;
 }
 
+// whether the location is within the bounds
+bool inside(vec3 loc, vec3 lowerbound, vec3 upperbound) {
+  return loc.x >= lowerbound.x && loc.x <= upperbound.x
+      && loc.y >= lowerbound.y && loc.y <= upperbound.y
+      && loc.z >= lowerbound.z && loc.z <= upperbound.z;
+}
+
 void main() {
 
   // Since the viewpoint in world coordinates is at (0,0,0),
@@ -43,24 +50,17 @@ void main() {
   // Hence inverse(R)=transpose(R) needs to be applied
 
   vec3 dir = transpose(R)*world;  // direction of the ray in model coordinate system
+  vec3 delta = 0.5 * normalize(dir);
 
-  // At this point, you have all the data to determine the samples
-  // in the model coordinates.
-
-  // if you compute:
-  // vec3 onestep = step_size*normalize(dir);
-  // then the i-th sample is at entry+i*dir (in the model coordinate system)
-
-  vec3 delta = 1 * normalize(dir);
-
-  vec3 loc = entry;
+  vec3 lowerbound = vec3(0.0, 0.0, 0.0);
+  vec3 upperbound = Size;
 
   float I = 0;
-  for (int i = 0; i < 200; ++i) {
+
+  for (vec3 loc = entry; inside(loc, lowerbound, upperbound); loc += delta) {
     if (valueAt(loc) > 0.0) {
-      I += 0.01;
+      I += 0.003;
     }
-    loc += delta;
   }
 
   fragcolor = vec4(I,0,0,1);
