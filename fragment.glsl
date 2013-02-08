@@ -23,31 +23,34 @@ layout (binding=0) uniform sampler3D tex;  // this is the texture, plugged into
 
 // -------------------- THE SHADER ----------------------------
 
+// look up model value
+float valueAt(vec3 coords) {
+  // The coordinates need to be scaled to [0,1] when sampling the texture.
+  // (on the OpenGL side, the texture is specified as the red channel texture --
+  //  see the C code).
+
+  return texture(tex,(1/Size.x,1/Size.y,1/Size.z) * coords).r;
+}
 
 void main() {
 
   // Since the viewpoint in world coordinates is at (0,0,0),
   //    "world" is the direction of the eye ray.
   // However, it needs to be translated into the model coordinate
-  //    system since this is what we'll be working with when 
+  //    system since this is what we'll be working with when
   //    performing texture lookup.
   // The rotation of the dataset (R) needs to be undone.
   // Hence inverse(R)=transpose(R) needs to be applied
 
   vec3 dir = transpose(R)*world;  // direction of the ray in model coordinate system
 
-  // At this point, you have all the data to determine the samples 
+  // At this point, you have all the data to determine the samples
   // in the model coordinates.
 
   // if you compute:
   // vec3 onestep = step_size*normalize(dir);
   // then the i-th sample is at entry+i*dir (in the model coordinate system)
 
-  // The coordinates need to be scaled to [0,1] when sampling the texture.
-  // so, to look up the function value at p, you need to 
-  // use texture(tex,(1/Size.x,1/Size.y,1/Size.z)*p).r
-  // (on the OpenGL side, the texture is specified as the red channel texture --
-  //  see the C code).
 
   // Include your compositing routine here.
   // A couple of things to remember/guidelines:
@@ -56,14 +59,14 @@ void main() {
   //      this means that you need to scale the "interesting isovalues"
   //  listed somewhere in the project directory by 1.0/255.0
   //   -- Texture boundary can lead to some odd artifacts.
-  //      The easy solution is to define the step size for gradient 
+  //      The easy solution is to define the step size for gradient
   //  computation in the model coordinate system (0.5 should work fine).
   //      Then, ignore all samples that are not in [1,Size.x-1]x[1,Size.y-1]x[1,Size.z-1]
   //  in your compositing algorithm. Basically, shave the data by 1 on each side.
   //  This will prevent the algorithm to sample across the boundary.
   //   -- Beware of negative color (abs H dot N and N dot L or map negative values to zero)
-  //   -- Beware of zero gradient: it's going to happen. In particular, don't normalize  
-  //  zero gradients. A simple trick to avoid problems is to return a tiny but nonzero 
+  //   -- Beware of zero gradient: it's going to happen. In particular, don't normalize
+  //  zero gradients. A simple trick to avoid problems is to return a tiny but nonzero
   //  gradient it the gradient is even tinier. Then, you don't have to worry about
   //  nonzero gradients at all.
   //   -- Some useful built-in functions: float length(vec3), float dot(vec3,vec3)
@@ -75,6 +78,5 @@ void main() {
   //  parameter for the isosurface transfer function.
   //  Remember about scaling before texture lookup (see above).
 
-
-  fragcolor = vec4(1,1,1,1);   // just make the fragment white
+  fragcolor = vec4(valueAt(world),0,0,1);   // just make the fragment white
 }
