@@ -26,7 +26,9 @@ float valueAt(vec3 loc) {
   // (on the OpenGL side, the texture is specified as the red channel texture --
   //  see the C code).
 
-  return texture(tex, loc / Size).r;
+  // because GLSL usually tiles lookups outside [0,1], clamp the coordinates
+  // slightly to prevent wraparound.
+  return texture(tex, clamp(loc / Size, 0.005, 0.995)).r;
 }
 
 // whether the location is within the ROI
