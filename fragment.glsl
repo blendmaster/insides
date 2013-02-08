@@ -93,11 +93,12 @@ float dist(float value, vec3 gradient, float isovalue, float width) {
   return max(0, 1 - abs(isovalue - value) / (width * length(gradient)));
 }
 
-// model to rgba transfer function, specific to bonsai
+// model to rgba transfer function. Comment out parts for specific models.
 vec4 colorAt(vec3 loc, vec3 gradient) {
   // isosurface display
   float v = valueAt(loc);
 
+  // bonsai
   float leafiness   = dist(v, gradient, 0.137254, 3);
   float branchiness = dist(v, gradient, 0.49215, 10);
 
@@ -105,6 +106,15 @@ vec4 colorAt(vec3 loc, vec3 gradient) {
               0.4 * leafiness,
               0.01 * branchiness,
               0.5 * leafiness + 2 * branchiness);
+
+  // engine
+  /*float engine = dist(v, gradient, 0.2, 10.0);*/
+  /*float insides = dist(v, gradient, 0.95, 7.0);*/
+
+  /*return vec4(0.3 * insides,*/
+              /*0.1 * insides,*/
+              /*0.5 * engine,*/
+              /*0.2 * engine + 1 * insides);*/
 }
 
 void main() {
