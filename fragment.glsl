@@ -40,7 +40,7 @@ bool inside(vec3 loc) {
 #define GRADIENT_DELTA     0.1
 #define T_THRESHOLD        0.01
 #define DIFFUSE            0.8
-#define SPECULAR           0.6
+#define SPECULAR           0.9
 #define SPECULAR_COMPONENT 20
 #define LIGHT_LOC          vec3(-50, 50, 100)
 #define LIGHT_INTENSITY    0.8
@@ -99,22 +99,23 @@ vec4 colorAt(vec3 loc, vec3 gradient) {
   float v = valueAt(loc);
 
   // bonsai
-  /*float leafiness   = dist(v, gradient, 0.137254, 3);*/
-  /*float branchiness = dist(v, gradient, 0.49215, 10);*/
+  float leafiness   = dist(v, gradient, 0.137254, 3);
+  float branchiness = dist(v, gradient, 0.5215, 20);
+  float rockiness   = dist(v, gradient, 1, 5);
 
-  /*return vec4(0.1 * branchiness,*/
-              /*0.4 * leafiness,*/
-              /*0.01 * branchiness,*/
-              /*0.5 * leafiness + 2 * branchiness);*/
+  return vec4(max(0, 0.4 * branchiness - 0.3 * rockiness),
+              max(0, 3 * leafiness - 0.9 * branchiness - 0.1 * rockiness),
+              max(0, 0.05 * branchiness - 0.1 * rockiness + 0.1 * leafiness),
+              1 - (1 - branchiness * 0.1) * (1 - leafiness * 0.03) * (1 - rockiness * 2));
 
   // engine
-  float engine  = dist(v, gradient, 0.2, 10.0);
-  float insides = dist(v, gradient, 0.95, 7.0);
+  /*float engine  = dist(v, gradient, 0.2, 10.0);*/
+  /*float insides = dist(v, gradient, 0.95, 7.0);*/
 
-  return vec4(0.8 * insides + 0.3 * engine,
-              0.1 * insides + 0.3 * engine,
-              0.3 * engine,
-              1 - (1 - engine * 0.1) * (1 - insides));
+  /*return vec4(0.8 * insides + 0.3 * engine,*/
+              /*0.1 * insides + 0.3 * engine,*/
+              /*0.3 * engine,*/
+              /*1 - (1 - engine * 0.1) * (1 - insides));*/
 }
 
 void main() {
