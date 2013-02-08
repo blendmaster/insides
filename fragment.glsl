@@ -88,10 +88,23 @@ float lightAt(vec3 modelLoc, vec3 worldLoc, vec3 gradient) {
          );
 }
 
-// model to rgba transfer function
+// intensity based on distance from isosurface
+float dist(float value, vec3 gradient, float isovalue, float width) {
+  return max(0, 1 - abs(isovalue - value) / (width * length(gradient)));
+}
+
+// model to rgba transfer function, specific to bonsai
 vec4 colorAt(vec3 loc, vec3 gradient) {
-  float alpha = length(gradient) * valueAt(loc) * 0.4;
-  return vec4(1, 1, 1, alpha);
+  // isosurface display
+  float v = valueAt(loc);
+
+  float leafiness   = dist(v, gradient, 0.137254, 3);
+  float branchiness = dist(v, gradient, 0.49215, 10);
+
+  return vec4(0.1 * branchiness,
+              0.4 * leafiness,
+              0.01 * branchiness,
+              0.5 * leafiness + 2 * branchiness);
 }
 
 void main() {
@@ -123,8 +136,8 @@ void main() {
     I += t * DELTA * color.a * lightAt(locM, locW, gradient);
     t *= pow(E, -color.a * DELTA);
 
-    rgb += color.rgb * color.a; // blend in color to output
+    rgb += color.rgb * color.a;
   }
 
-  fragcolor = vec4(rgb, 1); // pad with unused alpha (manual blending done above)
+  fragcolor = vec4(rgb * I, 1); // pad with unused alpha (manual blending done above)
 }
