@@ -41,9 +41,14 @@ bool inside(vec3 loc) {
       && loc.z >= 0 && loc.z <= Size.z;
 }
 
-#define DELTA          0.5
-#define GRADIENT_DELTA 0.1
-#define T_THRESHOLD    0.01
+#define DELTA              0.5
+#define GRADIENT_DELTA     0.1
+#define T_THRESHOLD        0.01
+#define DIFFUSE            0.4
+#define SPECULAR           0.8
+#define SPECULAR_COMPONENT 50
+#define LIGHT_LOC          vec3(-50, 50, 100)
+#define LIGHT_INTENSITY    0.8
 
 // coord is 0, 1, 2 (x, y z)
 float centralDiff(vec3 loc, int coord) {
@@ -61,6 +66,33 @@ vec3 gradientAt(vec3 loc) {
               centralDiff(loc, 2));
 }
 
+// normalized gradient, with 0 checking
+vec3 normalAt(vec3 loc) {
+  vec3 gradient = gradientAt(loc);
+  if (gradient.x == 0 && gradient.y == 0 && gradient.z == 0) {
+    return gradient;
+  } else {
+    return normalize(gradient);
+  }
+}
+
+float lighting(vec3 modelLoc, vec3 worldLoc) {
+  vec3 N = R * normalAt(modelLoc); // rotate into world coords
+  vec3 L = normalize(worldLoc - LIGHT_LOC);
+  vec3 V = normalize(worldLoc); // viewpoint is at 0,0,0
+
+  vec3 H = normalize(V + L);
+
+  float NdotL = dot(N, L);
+  NdotL = NdotL > 0.0 ? NdotL : 0.0;
+  float HdotN = dot(H, N);
+  HdotN = HdotN > 0.0 ? HdotN : 0.0;
+
+  return 0.1 + LIGHT_INTENSITY
+       * (DIFFUSE  * dot(N, L) +
+          SPECULAR * pow(HdotN, SPECULAR_COMPONENT));
+}
+
 void main() {
 
   // Since the viewpoint in world coordinates is at (0,0,0),
@@ -72,16 +104,20 @@ void main() {
   // Hence inverse(R)=transpose(R) needs to be applied
 
   vec3 dir = transpose(R)*world;  // direction of the ray in model coordinate system
-  vec3 delta = DELTA * normalize(dir);
+  vec3 deltaM = DELTA * normalize(dir);   // in model coords
+  vec3 deltaW = DELTA * normalize(world); // in word coords for illumination
 
   float I = 0;
   float t = 1;
 
-  for (vec3 loc = entry; t > T_THRESHOLD && inside(loc); loc += delta) {
-    if (valueAt(loc) > 0.0) {
-      I += t * length(gradientAt(loc));
+  for (vec3 locM = entry, locW = world;
+       t > T_THRESHOLD && inside(locM);
+       locM += deltaM, locW += deltaW) {
+
+    if (valueAt(locM) > 0.0) {
+      I += t * DELTA * valueAt(locM) * lighting(locM, locW);
     }
-    t *= pow(E, -valueAt(loc));
+    t *= pow(E, -valueAt(locM) * DELTA);
   }
 
   fragcolor = vec4(I,0,0,1);
