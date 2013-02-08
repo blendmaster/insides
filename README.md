@@ -28,6 +28,7 @@ bonsai model works the best right now:
 ## Screenshots
 
 ![bonsai tree](http://i.imgur.com/38JZrQl.png)
+![engine](http://i.imgur.com/aTH9WiD.png)
 
 ## Hacking
 
