@@ -84,15 +84,18 @@ float lighting(vec3 modelLoc, vec3 worldLoc) {
 
   vec3 H = normalize(V + L);
 
-  float NdotL = dot(N, L);
-  NdotL = NdotL > 0.0 ? NdotL : 0.0;
-  float HdotN = dot(H, N);
-  HdotN = HdotN > 0.0 ? HdotN : 0.0;
+  float NdotL = max(0, dot(N, L));
+  float HdotN = max(0, dot(H, N));
 
   return AMBIENT_INTENSITY + LIGHT_INTENSITY * (
            DIFFUSE  * dot(N, L) +
            SPECULAR * pow(HdotN, SPECULAR_COMPONENT)
          );
+}
+
+// intensity to colors
+vec4 transfer(float I) {
+  return vec4(I, 0, 0, 1);
 }
 
 void main() {
@@ -122,7 +125,7 @@ void main() {
     t *= pow(E, -valueAt(locM) * DELTA);
   }
 
-  fragcolor = vec4(I,0,0,1);
+  fragcolor = transfer(I);
 
   // Include your compositing routine here.
   // A couple of things to remember/guidelines:
