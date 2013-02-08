@@ -52,15 +52,17 @@ void main() {
   vec3 dir = transpose(R)*world;  // direction of the ray in model coordinate system
   vec3 delta = 0.5 * normalize(dir);
 
-  vec3 lowerbound = vec3(0.0, 0.0, 0.0);
-  vec3 upperbound = Size;
+  vec3 lower = vec3(0.0, 0.0, 0.0);
+  vec3 upper = Size;
 
   float I = 0;
+  float t = 1;
 
-  for (vec3 loc = entry; inside(loc, lowerbound, upperbound); loc += delta) {
+  for (vec3 loc = entry; t > 0.00001 && inside(loc, lower, upper); loc += delta) {
     if (valueAt(loc) > 0.0) {
-      I += 0.003;
+      I += t * valueAt(loc) * 0.5;
     }
+    t *= pow(2.71828, -valueAt(loc));
   }
 
   fragcolor = vec4(I,0,0,1);
