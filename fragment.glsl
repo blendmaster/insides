@@ -51,6 +51,16 @@ void main() {
   // vec3 onestep = step_size*normalize(dir);
   // then the i-th sample is at entry+i*dir (in the model coordinate system)
 
+  vec3 delta = 0.01 * normalize(dir);
+
+  vec3 loc = entry;
+  for (int i = 0; i < 100; ++i) {
+    if (valueAt(loc) > 0.0) {
+      fragcolor = vec4(1,0,0,1);   // just make the fragment white
+      return;
+    }
+    loc += delta;
+  }
 
   // Include your compositing routine here.
   // A couple of things to remember/guidelines:
@@ -78,5 +88,5 @@ void main() {
   //  parameter for the isosurface transfer function.
   //  Remember about scaling before texture lookup (see above).
 
-  fragcolor = vec4(valueAt(world),0,0,1);   // just make the fragment white
+  fragcolor = vec4(0,0,0,1);   // just make the fragment white
 }
