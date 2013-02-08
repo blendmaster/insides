@@ -39,12 +39,12 @@ bool inside(vec3 loc) {
 #define DELTA              0.5
 #define GRADIENT_DELTA     0.1
 #define T_THRESHOLD        0.01
-#define DIFFUSE            0.4
-#define SPECULAR           0.8
-#define SPECULAR_COMPONENT 50
+#define DIFFUSE            0.8
+#define SPECULAR           0.6
+#define SPECULAR_COMPONENT 20
 #define LIGHT_LOC          vec3(-50, 50, 100)
 #define LIGHT_INTENSITY    0.8
-#define AMBIENT_INTENSITY  0.1
+#define AMBIENT_INTENSITY  0.3
 
 // coord is 0, 1, 2 (x, y z)
 float centralDiff(vec3 loc, int coord) {
@@ -83,7 +83,7 @@ float lightAt(vec3 modelLoc, vec3 worldLoc, vec3 gradient) {
   float HdotN = max(0, dot(H, N));
 
   return AMBIENT_INTENSITY + LIGHT_INTENSITY * (
-           DIFFUSE  * dot(N, L) +
+           DIFFUSE  * NdotL +
            SPECULAR * pow(HdotN, SPECULAR_COMPONENT)
          );
 }
@@ -99,22 +99,22 @@ vec4 colorAt(vec3 loc, vec3 gradient) {
   float v = valueAt(loc);
 
   // bonsai
-  float leafiness   = dist(v, gradient, 0.137254, 3);
-  float branchiness = dist(v, gradient, 0.49215, 10);
+  /*float leafiness   = dist(v, gradient, 0.137254, 3);*/
+  /*float branchiness = dist(v, gradient, 0.49215, 10);*/
 
-  return vec4(0.1 * branchiness,
-              0.4 * leafiness,
-              0.01 * branchiness,
-              0.5 * leafiness + 2 * branchiness);
+  /*return vec4(0.1 * branchiness,*/
+              /*0.4 * leafiness,*/
+              /*0.01 * branchiness,*/
+              /*0.5 * leafiness + 2 * branchiness);*/
 
   // engine
-  /*float engine = dist(v, gradient, 0.2, 10.0);*/
-  /*float insides = dist(v, gradient, 0.95, 7.0);*/
+  float engine  = dist(v, gradient, 0.2, 10.0);
+  float insides = dist(v, gradient, 0.95, 7.0);
 
-  /*return vec4(0.3 * insides,*/
-              /*0.1 * insides,*/
-              /*0.5 * engine,*/
-              /*0.2 * engine + 1 * insides);*/
+  return vec4(0.8 * insides + 0.3 * engine,
+              0.1 * insides + 0.3 * engine,
+              0.3 * engine,
+              1 - (1 - engine * 0.1) * (1 - insides));
 }
 
 void main() {
@@ -131,8 +131,7 @@ void main() {
   vec3 deltaM = DELTA * normalize(dir);   // in model coords
   vec3 deltaW = DELTA * normalize(world); // in word coords for illumination
 
-  vec3 rgb = vec3(0,0,0); // output color, blended from black
-  float I = 0;
+  vec3 I = vec3(0, 0, 0);
   float t = 1;
 
   for (vec3 locM = entry, locW = world;
@@ -143,11 +142,9 @@ void main() {
 
     vec4 color = colorAt(locM, gradient);
 
-    I += t * DELTA * color.a * lightAt(locM, locW, gradient);
+    I += t * DELTA * color.a * lightAt(locM, locW, gradient) * color.rgb;
     t *= pow(E, -color.a * DELTA);
-
-    rgb += color.rgb * color.a;
   }
 
-  fragcolor = vec4(rgb * I, 1); // pad with unused alpha (manual blending done above)
+  fragcolor = vec4(I, 1);
 }
