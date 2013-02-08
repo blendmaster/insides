@@ -24,12 +24,12 @@ layout (binding=0) uniform sampler3D tex;  // this is the texture, plugged into
 // -------------------- THE SHADER ----------------------------
 
 // look up model value
-float valueAt(vec3 coords) {
+float valueAt(vec3 loc) {
   // The coordinates need to be scaled to [0,1] when sampling the texture.
   // (on the OpenGL side, the texture is specified as the red channel texture --
   //  see the C code).
 
-  return texture(tex,(1/Size.x,1/Size.y,1/Size.z) * coords).r;
+  return texture(tex, loc / Size).r;
 }
 
 // whether the location is within the bounds
@@ -37,6 +37,24 @@ bool inside(vec3 loc, vec3 lowerbound, vec3 upperbound) {
   return loc.x >= lowerbound.x && loc.x <= upperbound.x
       && loc.y >= lowerbound.y && loc.y <= upperbound.y
       && loc.z >= lowerbound.z && loc.z <= upperbound.z;
+}
+
+#define GRADIENT_DELTA 0.1
+
+// coord is 0, 1, 2 (x, y z)
+float centralDiff(vec3 loc, int coord) {
+  vec3 high = vec3(loc);
+  high[coord] += GRADIENT_DELTA;
+  vec3 low = vec3(loc);
+  low[coord] -= GRADIENT_DELTA;
+  return valueAt(high) - valueAt(low);
+}
+
+// from the model data
+vec3 gradientAt(vec3 loc) {
+  return vec3(centralDiff(loc, 0),
+              centralDiff(loc, 1),
+              centralDiff(loc, 2));
 }
 
 void main() {
@@ -58,9 +76,9 @@ void main() {
   float I = 0;
   float t = 1;
 
-  for (vec3 loc = entry; t > 0.00001 && inside(loc, lower, upper); loc += delta) {
+  for (vec3 loc = entry; t > 0.001 && inside(loc, lower, upper); loc += delta) {
     if (valueAt(loc) > 0.0) {
-      I += t * valueAt(loc) * 0.5;
+      I += t * length(gradientAt(loc));
     }
     t *= pow(2.71828, -valueAt(loc));
   }
