@@ -49,6 +49,7 @@ bool inside(vec3 loc) {
 #define SPECULAR_COMPONENT 50
 #define LIGHT_LOC          vec3(-50, 50, 100)
 #define LIGHT_INTENSITY    0.8
+#define AMBIENT_INTENSITY  0.1
 
 // coord is 0, 1, 2 (x, y z)
 float centralDiff(vec3 loc, int coord) {
@@ -88,9 +89,10 @@ float lighting(vec3 modelLoc, vec3 worldLoc) {
   float HdotN = dot(H, N);
   HdotN = HdotN > 0.0 ? HdotN : 0.0;
 
-  return 0.1 + LIGHT_INTENSITY
-       * (DIFFUSE  * dot(N, L) +
-          SPECULAR * pow(HdotN, SPECULAR_COMPONENT));
+  return AMBIENT_INTENSITY + LIGHT_INTENSITY * (
+           DIFFUSE  * dot(N, L) +
+           SPECULAR * pow(HdotN, SPECULAR_COMPONENT)
+         );
 }
 
 void main() {
