@@ -67,9 +67,8 @@ vec3 gradientAt(vec3 loc) {
               centralDiff(loc, 2));
 }
 
-// normalized gradient, with 0 checking
-vec3 normalAt(vec3 loc) {
-  vec3 gradient = gradientAt(loc);
+// handle 0 gradients
+vec3 normalGradient(vec3 gradient) {
   if (gradient.x == 0 && gradient.y == 0 && gradient.z == 0) {
     return gradient;
   } else {
@@ -77,8 +76,9 @@ vec3 normalAt(vec3 loc) {
   }
 }
 
-float lighting(vec3 modelLoc, vec3 worldLoc) {
-  vec3 N = R * normalAt(modelLoc); // rotate into world coords
+// gradient is passed in to avoid recalculation
+float lightAt(vec3 modelLoc, vec3 worldLoc, vec3 gradient) {
+  vec3 N = R * normalGradient(gradient); // rotate into world coords
   vec3 L = normalize(worldLoc - LIGHT_LOC);
   vec3 V = normalize(worldLoc); // viewpoint is at 0,0,0
 
@@ -93,9 +93,14 @@ float lighting(vec3 modelLoc, vec3 worldLoc) {
          );
 }
 
-// intensity to colors
-vec4 transfer(float I) {
-  return vec4(I, 0, 0, 1);
+// model to color transfer function
+vec3 colorAt(vec3 loc, vec3 gradient) {
+  return vec3(1,1,1);
+}
+
+// model to alpha transfer function
+float alphaAt(vec3 loc, vec3 gradient) {
+  return length(gradient) * valueAt(loc) * 0.3;
 }
 
 void main() {
@@ -112,6 +117,7 @@ void main() {
   vec3 deltaM = DELTA * normalize(dir);   // in model coords
   vec3 deltaW = DELTA * normalize(world); // in word coords for illumination
 
+  vec3 finalColor = vec3(0, 0, 0);
   float I = 0;
   float t = 1;
 
@@ -119,13 +125,18 @@ void main() {
        t > T_THRESHOLD && inside(locM);
        locM += deltaM, locW += deltaW) {
 
-    if (valueAt(locM) > 0.0) {
-      I += t * DELTA * valueAt(locM) * lighting(locM, locW);
-    }
-    t *= pow(E, -valueAt(locM) * DELTA);
+    vec3 gradient = gradientAt(locM);
+
+    vec3 color = colorAt(locM, gradient);
+    float alpha = alphaAt(locM, gradient);
+
+    I += t * DELTA * alpha * lightAt(locM, locW, gradient);
+    t *= pow(E, -alpha * DELTA);
+
+    finalColor += color * alpha;
   }
 
-  fragcolor = transfer(I);
+  fragcolor = vec4(finalColor, 1);
 
   // Include your compositing routine here.
   // A couple of things to remember/guidelines:
