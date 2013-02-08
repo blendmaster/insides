@@ -16,12 +16,7 @@ out vec4 fragcolor; // the final color of the fragment
 uniform mat3 R;         // rotation matrix (defined by the trackball)
 uniform vec3 Size;      // [sizex-1,sizey-1,sizez-1] - basically, the size of the data set
 
-layout (binding=0) uniform sampler3D tex;  // this is the texture, plugged into
-        // the texture attachment point #0
-        // you'll probably want to keep it that way
-        // note that this may lead to an error if your
-        // hardware does not support OpenGL 4.2 -- let me
-        // know if this comes up (an easy alternative exists)
+layout (binding=0) uniform sampler3D tex; 
 
 // -------------------- THE SHADER ----------------------------
 
@@ -93,14 +88,10 @@ float lightAt(vec3 modelLoc, vec3 worldLoc, vec3 gradient) {
          );
 }
 
-// model to color transfer function
-vec3 colorAt(vec3 loc, vec3 gradient) {
-  return vec3(1,1,1);
-}
-
-// model to alpha transfer function
-float alphaAt(vec3 loc, vec3 gradient) {
-  return length(gradient) * valueAt(loc) * 0.3;
+// model to rgba transfer function
+vec4 colorAt(vec3 loc, vec3 gradient) {
+  float alpha = length(gradient) * valueAt(loc) * 0.4;
+  return vec4(1, 1, 1, alpha);
 }
 
 void main() {
@@ -117,7 +108,7 @@ void main() {
   vec3 deltaM = DELTA * normalize(dir);   // in model coords
   vec3 deltaW = DELTA * normalize(world); // in word coords for illumination
 
-  vec3 finalColor = vec3(0, 0, 0);
+  vec3 rgb = vec3(0,0,0); // output color, blended from black
   float I = 0;
   float t = 1;
 
@@ -127,40 +118,13 @@ void main() {
 
     vec3 gradient = gradientAt(locM);
 
-    vec3 color = colorAt(locM, gradient);
-    float alpha = alphaAt(locM, gradient);
+    vec4 color = colorAt(locM, gradient);
 
-    I += t * DELTA * alpha * lightAt(locM, locW, gradient);
-    t *= pow(E, -alpha * DELTA);
+    I += t * DELTA * color.a * lightAt(locM, locW, gradient);
+    t *= pow(E, -color.a * DELTA);
 
-    finalColor += color * alpha;
+    rgb += color.rgb * color.a; // blend in color to output
   }
 
-  fragcolor = vec4(finalColor, 1);
-
-  // Include your compositing routine here.
-  // A couple of things to remember/guidelines:
-  //   -- Values in the texture (which were sent as 8-bit unsigned ints)
-  //  are going to appear as floating point values in [0,1];
-  //      this means that you need to scale the "interesting isovalues"
-  //  listed somewhere in the project directory by 1.0/255.0
-  //   -- Texture boundary can lead to some odd artifacts.
-  //      The easy solution is to define the step size for gradient
-  //  computation in the model coordinate system (0.5 should work fine).
-  //      Then, ignore all samples that are not in [1,Size.x-1]x[1,Size.y-1]x[1,Size.z-1]
-  //  in your compositing algorithm. Basically, shave the data by 1 on each side.
-  //  This will prevent the algorithm to sample across the boundary.
-  //   -- Beware of negative color (abs H dot N and N dot L or map negative values to zero)
-  //   -- Beware of zero gradient: it's going to happen. In particular, don't normalize
-  //  zero gradients. A simple trick to avoid problems is to return a tiny but nonzero
-  //  gradient it the gradient is even tinier. Then, you don't have to worry about
-  //  nonzero gradients at all.
-  //   -- Some useful built-in functions: float length(vec3), float dot(vec3,vec3)
-  //  pow(float,float) [it should be clear what they do]; see GLSL specification
-  //  for more.
-  //   -- I think things are going to be easier if you consistently express
-  //  all the important parameters in the model coordinate units.
-  //   This includes step sizes (for samples and gradient) and the distance 
-  //  parameter for the isosurface transfer function.
-  //  Remember about scaling before texture lookup (see above).
+  fragcolor = vec4(rgb, 1); // pad with unused alpha (manual blending done above)
 }
