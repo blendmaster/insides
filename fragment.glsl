@@ -101,14 +101,14 @@ vec4 colorAt(vec3 loc, vec3 gradient) {
   float v = valueAt(loc);
 
   // bonsai
-  float leafiness   = dist(v, gradient, 0.137254, 2);
-  float branchiness = dist(v, gradient, 0.3215, 5);
-  float rockiness   = dist(v, gradient, 1, 5);
+  /*float leafiness   = dist(v, gradient, 0.137254, 2);*/
+  /*float branchiness = dist(v, gradient, 0.3215, 5);*/
+  /*float rockiness   = dist(v, gradient, 1, 5);*/
 
-  return vec4(max(0, 0.4 * branchiness + 0.5 * rockiness + 0.5 * leafiness),
-              max(0, 3 * leafiness - 0.3 * branchiness + 0.2 * rockiness),
-              max(0, 0.05 * branchiness + 0.1 * rockiness + 0.5 * leafiness),
-              1 - (1 - branchiness * 0.1) * (1 - leafiness * 0.05) * (1 - rockiness * 2));
+  /*return vec4(max(0, 0.4 * branchiness + 0.5 * rockiness + 0.5 * leafiness),*/
+              /*max(0, 3 * leafiness - 0.3 * branchiness + 0.2 * rockiness),*/
+              /*max(0, 0.05 * branchiness + 0.1 * rockiness + 0.5 * leafiness),*/
+              /*1 - (1 - branchiness * 0.1) * (1 - leafiness * 0.05) * (1 - rockiness * 2));*/
 
   // engine
   /*float engine  = dist(v, gradient, 0.2, 10.0);*/
@@ -118,6 +118,16 @@ vec4 colorAt(vec3 loc, vec3 gradient) {
               /*0.1 * insides + 0.3 * engine,*/
               /*0.3 * engine,*/
               /*1 - (1 - engine * 0.1) * (1 - insides));*/
+
+  // skull
+  float bones = dist(v, gradient, 0.15, 5.0);
+  float tubes = dist(v, gradient, 0.99, 7.0); // not sure what these are
+  float teeth = dist(v, gradient, 0.40, 5.0);
+
+  return vec4(0.5 * bones + 1 * tubes + 1 * teeth,
+              0.5 * bones + 0.1 * tubes + 1 * teeth,
+              0.5 * bones + 1 * teeth,
+              1 - (1 - bones * 0.05) * (1 - tubes) * (1 - teeth * 0.2));
 }
 
 void main() {
