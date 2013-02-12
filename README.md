@@ -20,15 +20,21 @@ to create the `insides` executable. The command line arguments are:
 
     $ insides <texture file> <xsize> <ysize> <zsize>
 
-You can use the texture files at [volvis.org](http://www.volvis.org). The
-bonsai model works the best right now:
+You can use the texture files at [volvis.org](http://www.volvis.org). Try the
+bonsai model:
 
     $ insides bonsai.raw 256 256 256
 
+I've tuned some different transfer functions for selected volvis models. Edit
+`fragment.glsl` and uncomment the named code block in `colorAt` for results
+like the screenshots below. Yeah, I know it's not a great way to change the
+transfer functions, but I couldn't think of a better method.
+
 ## Screenshots
 
-![bonsai tree](http://i.imgur.com/38JZrQl.png)
-![engine](http://i.imgur.com/aTH9WiD.png)
+![bonsai tree](http://i.imgur.com/gYGHUnB.png)
+![engine](http://i.imgur.com/Q4YTH82.png)
+![skull](http://i.imgur.com/gMQNlDS.png)
 
 ## Hacking
 
